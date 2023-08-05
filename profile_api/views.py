@@ -6,6 +6,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework import filters
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
+from rest_framework.permissions import IsAuthenticated
 
 from profile_api import serializers
 from profile_api import models
@@ -92,7 +93,7 @@ class HelloViewSet(viewsets.ViewSet):
         """ Lida com a atualização parcial do objeto """
         return Response({'http_method': 'PATCH'})
 
-    def destruir(self, request, pk=None):
+    def delete(self, request, pk=None):
         """ Deleta um objeto """
         return Response({'http_method': 'DELETE'})
 
@@ -111,4 +112,20 @@ class UserLoginApiView(ObtainAuthToken):
     """
 
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
-    
+
+
+class UserProfileFeedViewSet(viewsets.ModelViewSet):
+    """ Lida com criação, leitura e atualização dos items do feed
+    """
+
+    authentication_classes = (TokenAuthentication,)
+    serializer_class = serializers.ProfileFeedItemSerializer
+    queryset = models.ProfileFeedItem.objects.all()
+    permission_classes = (
+            permissions.UpdateOwnStatus, IsAuthenticated,)
+
+    def perform_create(self, serializer):
+        """ Ajusta o profile do usuário para o perfil logado
+        """
+
+        serializer.save(user_profile=self.request.user)
